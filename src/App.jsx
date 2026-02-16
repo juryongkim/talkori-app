@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Play, ChevronLeft, ChevronRight, Volume2, 
-  Menu, X, Zap, Gauge, ArrowLeft, Info,
+  Menu, X, Zap, Gauge, ArrowLeft,
   GraduationCap, LayoutGrid
 } from 'lucide-react';
 
@@ -12,26 +12,28 @@ const BUNNY_CDN_HOST = "https://talkori.b-cdn.net";
 const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 
 const App = () => {
-  // 1. 데이터 가공: flat한 data.json을 Chapter(Day)별로 그룹화
+  // 1. 데이터 가공: CSV 기반 JSON 구조에 맞게 수정
   const CURRICULUM = useMemo(() => {
     if (!Array.isArray(rawData)) return [];
     const groups = {};
     
     rawData.forEach(item => {
-      const dayKey = item.Day || "1";
+      // 컬럼명을 소문자(day, situation 등)로 변경하여 매칭
+      const dayKey = String(item.day || "1");
       if (!groups[dayKey]) {
         groups[dayKey] = {
           chapterId: dayKey,
-          title: `Day ${dayKey}: ${item.Situation || "Learning"}`,
+          title: `Day ${dayKey}: ${item.situation || "Learning"}`,
           words: []
         };
       }
       
       const examples = [];
+      // ex1_ko ~ ex10_ko 구조를 배열로 변환
       for (let i = 1; i <= 10; i++) {
-        const koField = `Ex${i}_Ko`;
-        const enField = `Ex${i}_En`;
-        const typeField = `Ex${i}_Type`;
+        const koField = `ex${i}_ko`;
+        const enField = `ex${i}_en`;
+        const typeField = `ex${i}_type`;
         
         if (item[koField]) {
           examples.push({
@@ -43,24 +45,31 @@ const App = () => {
       }
 
       groups[dayKey].words.push({
-        id: String(item.ID),
-        word: item.Word,
-        meaning: item.Meaning,
-        usage_note: item.Usage_Note,
+        id: String(item.id), // id 컬럼 매칭
+        word: item.word,
+        meaning: item.meaning,
+        usage_note: item.usage_note,
         examples: examples
       });
     });
     return Object.values(groups);
   }, []);
 
-  // State 관리
-  const [activeChapter, setActiveChapter] = useState(CURRICULUM[0] || null);
+  // State 초기값 설정 (데이터가 로드된 후 첫 번째 챕터 선택)
+  const [activeChapter, setActiveChapter] = useState(null);
   const [activeWord, setActiveWord] = useState(null); 
   const [currentExIdx, setCurrentExIdx] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
 
-  // 오디오 URL 생성
+  // 데이터 로드 완료 후 초기 챕터 설정
+  React.useEffect(() => {
+    if (CURRICULUM.length > 0 && !activeChapter) {
+      setActiveChapter(CURRICULUM[0]);
+    }
+  }, [CURRICULUM]);
+
+  // 오디오 URL 생성 (명세서 규칙: w_1-1.mp3)
   const getAudioUrl = (wordId, exIndex = null) => {
     if (exIndex === null) {
       return `${CDN_BASE_URL}/w_${wordId}.mp3`;
@@ -73,14 +82,14 @@ const App = () => {
   const playAudio = (url) => {
     const audio = new Audio(url);
     audio.playbackRate = playbackRate;
-    audio.play().catch(e => console.error("Audio Error:", e));
+    audio.play().catch(e => console.error("Audio Play Error:", e));
   };
 
   const toggleSpeed = () => {
     setPlaybackRate(prev => (prev === 1.0 ? 0.8 : prev === 0.8 ? 0.6 : 1.0));
   };
 
-  if (!activeChapter) return <div className="p-10">Loading Data... Check data.json structure.</div>;
+  if (!activeChapter) return <div className="flex h-screen items-center justify-center font-bold text-[#3713ec]">Loading Talkori Data...</div>;
 
   return (
     <div className="flex h-screen bg-[#f6f6f8] font-sans text-slate-800 overflow-hidden">
@@ -158,20 +167,24 @@ const App = () => {
 
             <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
               <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left: Word & Main sentence */}
                 <div className="lg:col-span-5 space-y-6">
-                  <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 relative overflow-hidden">
+                  <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                     <span className="inline-block px-3 py-1 bg-[#3713ec]/10 text-[#3713ec] text-[10px] font-bold rounded-full uppercase mb-4">Vocabulary</span>
                     <h2 className="text-5xl font-black text-slate-900 mb-2 korean-text">{activeWord.word}</h2>
                     <p className="text-xl text-slate-500 font-medium mb-6">{activeWord.meaning}</p>
                     <button onClick={() => playAudio(getAudioUrl(activeWord.id))} className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-[#3713ec] hover:text-white transition-all shadow-inner">
                       <Volume2 size={20} />
                     </button>
+                    {activeWord.usage_note && (
+                      <div className="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-[11px] text-yellow-800 leading-relaxed">
+                        <span className="font-bold">Usage Note:</span> {activeWord.usage_note}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="bg-[#3713ec] rounded-3xl p-8 md:p-10 text-white shadow-xl shadow-[#3713ec]/20 min-h-[300px] flex flex-col justify-center relative overflow-hidden group">
+                  <div className="bg-[#3713ec] rounded-3xl p-8 md:p-10 text-white shadow-xl shadow-[#3713ec]/20 min-h-[300px] flex flex-col justify-center relative overflow-hidden">
                     <div className="relative z-10">
-                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest block mb-4">Example Pattern {currentExIdx + 1}</span>
+                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest block mb-4">Pattern {currentExIdx + 1}: {activeWord.examples[currentExIdx]?.type}</span>
                       <h3 className="text-3xl md:text-4xl font-bold mb-4 korean-text break-keep leading-snug">
                         {activeWord.examples[currentExIdx]?.ko}
                       </h3>
@@ -181,12 +194,10 @@ const App = () => {
                         <Volume2 size={32} className="fill-current" />
                       </button>
                     </div>
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl"></div>
                   </div>
                 </div>
 
-                {/* Right: Matrix Grid (Fixed Layout) */}
-                <div className="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full lg:max-h-[700px]">
+                <div className="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full lg:max-h-[650px]">
                   <div className="p-6 border-b border-slate-50 bg-slate-50/30 flex items-center gap-2">
                     <LayoutGrid className="text-[#3713ec]" size={18} />
                     <h3 className="font-bold text-slate-800">Variation Matrix</h3>
@@ -199,7 +210,7 @@ const App = () => {
                           onClick={() => { setCurrentExIdx(idx); playAudio(getAudioUrl(activeWord.id, idx)); }}
                           className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left group
                             ${currentExIdx === idx 
-                              ? 'border-[#3713ec] bg-[#3713ec] text-white shadow-lg shadow-[#3713ec]/20' 
+                              ? 'border-[#3713ec] bg-[#3713ec] text-white shadow-lg' 
                               : 'border-slate-50 bg-slate-50/50 hover:border-[#3713ec]/30 text-slate-600'}
                           `}
                         >
@@ -223,14 +234,14 @@ const App = () => {
               <button onClick={() => {
                 const idx = activeChapter.words.findIndex(w => w.id === activeWord.id);
                 if(idx > 0) { setActiveWord(activeChapter.words[idx-1]); setCurrentExIdx(0); }
-              }} className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 disabled:opacity-30 transition-all">
+              }} className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all">
                 <ChevronLeft /> Prev
               </button>
               <button onClick={() => {
                 const idx = activeChapter.words.findIndex(w => w.id === activeWord.id);
                 if(idx < activeChapter.words.length - 1) { setActiveWord(activeChapter.words[idx+1]); setCurrentExIdx(0); }
               }} className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-black transition-all">
-                Next Word <ChevronRight />
+                Next <ChevronRight />
               </button>
             </footer>
           </div>
@@ -242,7 +253,6 @@ const App = () => {
         body { font-family: 'Lexend', sans-serif; }
         .korean-text { font-family: 'Noto Sans KR', sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
       `}</style>
     </div>

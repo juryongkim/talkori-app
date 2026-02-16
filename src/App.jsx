@@ -9,7 +9,7 @@ import {
 import rawData from './data.json';
 
 // ==========================================
-// [설정] 보안 및 이동 주소 (반드시 확인!)
+// [설정] 보안 및 이동 주소
 // ==========================================
 const ALLOWED_ORIGIN = "https://talkori.com";     // 워드프레스 도메인
 const EXIT_URL = "https://talkori.com"; // 종료 후 돌아갈 강의실 주소
@@ -60,7 +60,7 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
 
-  // 🎵 오디오 제어를 위한 Ref
+  // 🎵 오디오 제어를 위한 Ref (중첩 방지용)
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const App = () => {
   };
 
   const playAudio = (url) => {
-    stopCurrentAudio(); // 중첩 방지
+    stopCurrentAudio();
     const audio = new Audio(url);
     audio.playbackRate = playbackRate;
     audioRef.current = audio;
@@ -98,10 +98,18 @@ const App = () => {
     setPlaybackRate(prev => (prev === 1.0 ? 0.8 : prev === 0.8 ? 0.6 : 1.0));
   };
 
-  // 🚪 [종료 로직] 아이프레임을 빠져나가 부모 창(워드프레스)을 이동시킵니다.
+  // 🚪 [종료 로직 수정] 브라우저 보안 이슈 해결을 위한 postMessage 방식
   const handleExit = () => {
     if (window.confirm("학습을 종료하고 강의실로 돌아갈까요?")) {
-      window.top.location.href = EXIT_URL;
+      // 부모 창(워드프레스)에 'exit_talkori' 신호를 보냅니다.
+      window.parent.postMessage('exit_talkori', '*'); 
+      
+      // 혹시 모를 상황을 대비한 백업 코드
+      try {
+        window.top.location.href = EXIT_URL;
+      } catch (e) {
+        console.log("Navigating via postMessage...");
+      }
     }
   };
 

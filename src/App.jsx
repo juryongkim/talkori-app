@@ -8,15 +8,14 @@ import {
 // 실제 데이터 파일을 불러옵니다.
 import rawData from './data.json';
 
+// [수정 포인트] 호스트 주소 끝에 /가 없는지 확인하세요. 
 const BUNNY_CDN_HOST = "https://talkori.b-cdn.net"; 
-const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
+const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`; // 결과: https://talkori.b-cdn.net/audio_tk
 
 const App = () => {
-  // 1. 데이터 가공: 보내주신 Nested JSON 구조에 최적화
   const CURRICULUM = useMemo(() => {
     if (!Array.isArray(rawData)) return [];
     const groups = {};
-    
     rawData.forEach(item => {
       const dayKey = String(item.day || "1");
       if (!groups[dayKey]) {
@@ -26,14 +25,12 @@ const App = () => {
           words: []
         };
       }
-      
-      // 이미 구조화된 examples 배열을 그대로 사용합니다.
       groups[dayKey].words.push({
-        id: String(item.id),
+        id: String(item.id), // 예: "1-1"
         word: item.word,
         meaning: item.meaning,
         usage_note: item.usage_note,
-        examples: item.examples || [] // 핵심: 데이터 구조 매칭
+        examples: item.examples || []
       });
     });
     return Object.values(groups);
@@ -51,27 +48,40 @@ const App = () => {
     }
   }, [CURRICULUM]);
 
-  // 오디오 URL 생성기 (w_1-1.mp3 형식)
+  /**
+   * 🎵 오디오 URL 생성기
+   * 규칙 1 (단어): w_{id}.mp3  => w_1-1.mp3
+   * 규칙 2 (예문): w_{id}_ex_{num}.mp3 => w_1-1_ex_01.mp3
+   */
   const getAudioUrl = (wordId, exIndex = null) => {
+    // 1-1 처럼 하이픈이 들어간 ID를 그대로 사용합니다.
+    const cleanId = String(wordId).trim();
+    
     if (exIndex === null) {
-      return `${CDN_BASE_URL}/w_${wordId}.mp3`;
+      // 단어 원형 오디오
+      return `${CDN_BASE_URL}/w_${cleanId}.mp3`;
     } else {
-      const formattedEx = String(exIndex + 1).padStart(2, '0');
-      return `${CDN_BASE_URL}/w_${wordId}_ex_${formattedEx}.mp3`;
+      // 예문 오디오 (인덱스는 0부터 시작하므로 +1 후 2자리 포맷팅)
+      const formattedNum = String(exIndex + 1).padStart(2, '0');
+      return `${CDN_BASE_URL}/w_${cleanId}_ex_${formattedNum}.mp3`;
     }
   };
 
   const playAudio = (url) => {
+    console.log("🔊 오디오 재생 시도:", url); // 개발자 도구(F12)에서 URL 확인 가능
     const audio = new Audio(url);
     audio.playbackRate = playbackRate;
-    audio.play().catch(e => console.error("Audio Play Error:", e, "URL:", url));
+    audio.play().catch(e => {
+      console.error("❌ 재생 실패! 파일명을 확인하세요:", url);
+      // alert("오디오 파일을 찾을 수 없습니다. (404)"); // 필요시 주석 해제
+    });
   };
 
   const toggleSpeed = () => {
     setPlaybackRate(prev => (prev === 1.0 ? 0.8 : prev === 0.8 ? 0.6 : 1.0));
   };
 
-  if (!activeChapter) return <div className="flex h-screen items-center justify-center font-bold text-[#3713ec]">Loading Talkori Data...</div>;
+  if (!activeChapter) return <div className="flex h-screen items-center justify-center font-bold text-[#3713ec]">Loading...</div>;
 
   return (
     <div className="flex h-screen bg-[#f6f6f8] font-sans text-slate-800 overflow-hidden">
@@ -134,7 +144,7 @@ const App = () => {
             </div>
           </div>
         ) : (
-          /* MATRIX VIEW (Detail) */
+          /* MATRIX VIEW */
           <div className="flex-1 flex flex-col overflow-hidden bg-[#f6f6f8]">
             <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shrink-0">
               <button onClick={() => setActiveWord(null)} className="flex items-center gap-2 text-slate-500 font-bold text-sm hover:text-[#3713ec] transition-colors">
@@ -149,8 +159,8 @@ const App = () => {
 
             <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
               <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left Area: Word & Display */}
                 <div className="lg:col-span-5 space-y-6">
+                  {/* Word Card */}
                   <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                     <span className="inline-block px-3 py-1 bg-[#3713ec]/10 text-[#3713ec] text-[10px] font-bold rounded-full uppercase mb-4">Vocabulary</span>
                     <h2 className="text-5xl font-black text-slate-900 mb-2 korean-text">{activeWord.word}</h2>
@@ -165,13 +175,12 @@ const App = () => {
                     )}
                   </div>
 
+                  {/* Sentence Display */}
                   <div className="bg-[#3713ec] rounded-3xl p-8 md:p-10 text-white shadow-xl shadow-[#3713ec]/20 min-h-[300px] flex flex-col justify-center relative overflow-hidden group">
                     <div className="relative z-10">
-                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest block mb-4">
-                        Pattern {currentExIdx + 1}: {activeWord.examples[currentExIdx]?.type}
-                      </span>
+                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest block mb-4">Pattern {currentExIdx + 1}: {activeWord.examples[currentExIdx]?.type}</span>
                       <h3 className="text-3xl md:text-4xl font-bold mb-4 korean-text break-keep leading-snug">
-                        {activeWord.examples[currentExIdx]?.ko || "Example text missing"}
+                        {activeWord.examples[currentExIdx]?.ko || "No Text"}
                       </h3>
                       <p className="text-white/70 text-lg mb-10 font-medium italic">
                         {activeWord.examples[currentExIdx]?.en}
@@ -185,7 +194,7 @@ const App = () => {
                   </div>
                 </div>
 
-                {/* Right Area: Matrix Grid */}
+                {/* Matrix Grid */}
                 <div className="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full lg:max-h-[650px]">
                   <div className="p-6 border-b border-slate-50 bg-slate-50/30 flex items-center gap-2">
                     <LayoutGrid className="text-[#3713ec]" size={18} />
@@ -223,8 +232,8 @@ const App = () => {
               <button onClick={() => {
                 const idx = activeChapter.words.findIndex(w => w.id === activeWord.id);
                 if(idx > 0) { setActiveWord(activeChapter.words[idx-1]); setCurrentExIdx(0); }
-              }} className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all disabled:opacity-30">
-                <ChevronLeft /> Prev
+              }} className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all">
+                <ChevronLeft /> Prev Word
               </button>
               <button onClick={() => {
                 const idx = activeChapter.words.findIndex(w => w.id === activeWord.id);
@@ -236,7 +245,6 @@ const App = () => {
           </div>
         )}
       </div>
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Lexend', sans-serif; }

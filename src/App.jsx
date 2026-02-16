@@ -12,7 +12,7 @@ import rawData from './data.json';
 // [설정] 보안 및 이동 주소 (반드시 확인!)
 // ==========================================
 const ALLOWED_ORIGIN = "https://talkori.com";     // 워드프레스 도메인
-const EXIT_URL = "https://talkori.com/classroom"; // 종료 후 돌아갈 강의실 주소
+const EXIT_URL = "https://talkori.com"; // 종료 후 돌아갈 강의실 주소
 const BUNNY_CDN_HOST = "https://talkori.b-cdn.net"; 
 const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 

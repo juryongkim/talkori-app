@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Play, ChevronLeft, ChevronRight, Volume2, 
   Menu, X, Zap, Gauge, ArrowLeft,
@@ -8,11 +8,11 @@ import {
 // 실제 데이터 파일을 불러옵니다.
 import rawData from './data.json';
 
-// [수정 포인트] 호스트 주소 끝에 /가 없는지 확인하세요. 
 const BUNNY_CDN_HOST = "https://talkori.b-cdn.net"; 
-const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`; // 결과: https://talkori.b-cdn.net/audio_tk
+const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 
 const App = () => {
+  // 1. 데이터 가공 로직
   const CURRICULUM = useMemo(() => {
     if (!Array.isArray(rawData)) return [];
     const groups = {};
@@ -26,7 +26,7 @@ const App = () => {
         };
       }
       groups[dayKey].words.push({
-        id: String(item.id), // 예: "1-1"
+        id: String(item.id),
         word: item.word,
         meaning: item.meaning,
         usage_note: item.usage_note,
@@ -42,43 +42,59 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
 
+  // 🎵 [핵심 추가] 현재 재생 중인 오디오를 추적하기 위한 Ref
+  const audioRef = useRef(null);
+
   useEffect(() => {
     if (CURRICULUM.length > 0 && !activeChapter) {
       setActiveChapter(CURRICULUM[0]);
     }
   }, [CURRICULUM]);
 
-  /**
-   * 🎵 오디오 URL 생성기
-   * 규칙 1 (단어): w_{id}.mp3  => w_1-1.mp3
-   * 규칙 2 (예문): w_{id}_ex_{num}.mp3 => w_1-1_ex_01.mp3
-   */
+  // 🎵 [핵심 추가] 화면이 바뀌거나 단어가 바뀔 때 기존 오디오를 끄는 청소 기능
+  useEffect(() => {
+    stopCurrentAudio();
+  }, [activeWord, activeChapter]);
+
+  const stopCurrentAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+
   const getAudioUrl = (wordId, exIndex = null) => {
-    // 1-1 처럼 하이픈이 들어간 ID를 그대로 사용합니다.
     const cleanId = String(wordId).trim();
-    
     if (exIndex === null) {
-      // 단어 원형 오디오
       return `${CDN_BASE_URL}/w_${cleanId}.mp3`;
     } else {
-      // 예문 오디오 (인덱스는 0부터 시작하므로 +1 후 2자리 포맷팅)
       const formattedNum = String(exIndex + 1).padStart(2, '0');
       return `${CDN_BASE_URL}/w_${cleanId}_ex_${formattedNum}.mp3`;
     }
   };
 
+  // 🎵 [로직 수정] 오디오 재생 함수
   const playAudio = (url) => {
-    console.log("🔊 오디오 재생 시도:", url); // 개발자 도구(F12)에서 URL 확인 가능
+    // 1. 이미 재생 중인 소리가 있다면 정지
+    stopCurrentAudio();
+
+    // 2. 새 오디오 객체 생성 및 설정
     const audio = new Audio(url);
     audio.playbackRate = playbackRate;
-    audio.play().catch(e => {
-      console.error("❌ 재생 실패! 파일명을 확인하세요:", url);
-      // alert("오디오 파일을 찾을 수 없습니다. (404)"); // 필요시 주석 해제
-    });
+    
+    // 3. 현재 재생 중인 오디오로 등록
+    audioRef.current = audio;
+
+    // 4. 재생
+    audio.play().catch(e => console.error("Audio Play Error:", e));
   };
 
   const toggleSpeed = () => {
     setPlaybackRate(prev => (prev === 1.0 ? 0.8 : prev === 0.8 ? 0.6 : 1.0));
+    // 배속 변경 시 현재 재생 중인 오디오에도 즉시 적용
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate === 1.0 ? 0.8 : playbackRate === 0.8 ? 0.6 : 1.0;
+    }
   };
 
   if (!activeChapter) return <div className="flex h-screen items-center justify-center font-bold text-[#3713ec]">Loading...</div>;
@@ -190,7 +206,6 @@ const App = () => {
                         <Volume2 size={32} className="fill-current" />
                       </button>
                     </div>
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl"></div>
                   </div>
                 </div>
 

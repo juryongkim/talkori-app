@@ -98,19 +98,10 @@ const App = () => {
     setPlaybackRate(prev => (prev === 1.0 ? 0.8 : prev === 0.8 ? 0.6 : 1.0));
   };
 
-  // 🚪 [종료 로직 수정] 브라우저 보안 이슈 해결을 위한 postMessage 방식
+  // 🚪 [수정됨] 묻지도 따지지도 않고 바로 나가는 로직
   const handleExit = () => {
-    if (window.confirm("학습을 종료하고 강의실로 돌아갈까요?")) {
-      // 부모 창(워드프레스)에 'exit_talkori' 신호를 보냅니다.
-      window.parent.postMessage('exit_talkori', '*'); 
-      
-      // 혹시 모를 상황을 대비한 백업 코드
-      try {
-        window.top.location.href = EXIT_URL;
-      } catch (e) {
-        console.log("Navigating via postMessage...");
-      }
-    }
+    // 팝업(window.confirm) 제거! 바로 부모 창에 신호를 보냅니다.
+    window.parent.postMessage('exit_talkori', '*'); 
   };
 
   if (!isAuthorized) {
@@ -119,7 +110,7 @@ const App = () => {
         <div>
           <h1 className="text-4xl font-black text-[#3713ec] mb-4 tracking-tighter">ACCESS DENIED</h1>
           <p className="text-slate-500 mb-8 font-medium">Talkori는 공식 강의실 내에서만 이용 가능합니다.</p>
-          <button onClick={() => window.top.location.href = ALLOWED_ORIGIN} className="px-8 py-3 bg-[#3713ec] text-white rounded-xl font-bold shadow-lg shadow-[#3713ec]/20 hover:scale-105 transition-all">홈페이지로 이동</button>
+          <button onClick={() => window.parent.postMessage('exit_talkori', '*')} className="px-8 py-3 bg-[#3713ec] text-white rounded-xl font-bold shadow-lg shadow-[#3713ec]/20 hover:scale-105 transition-all">홈페이지로 이동</button>
         </div>
       </div>
     );

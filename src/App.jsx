@@ -2,37 +2,41 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Play, ChevronLeft, ChevronRight, Volume2, 
   Menu, X, Zap, Gauge, ArrowLeft, LogOut,
-  GraduationCap, LayoutGrid
+  GraduationCap, LayoutGrid, Lock, Sparkles
 } from 'lucide-react';
 
-// 실제 데이터 파일을 불러옵니다.
 import rawData from './data.json';
 
 // ==========================================
-// [설정] 보안 및 이동 주소
+// [설정] 주소 및 보안 설정 (수정 필요)
 // ==========================================
-const ALLOWED_ORIGIN = "https://talkori.com";     // 워드프레스 도메인
-const EXIT_URL = "https://talkori.com"; // 종료 후 돌아갈 강의실 주소
+const ALLOWED_ORIGIN = "https://talkori.com";     
+const CLASSROOM_URL = "https://talkori.com"; // [회원용] 종료 시 이동 주소
+const SALES_PAGE_URL = "https://talkori.com";  // [체험판] 종료 시 이동할 판매 페이지 주소
 const BUNNY_CDN_HOST = "https://talkori.b-cdn.net"; 
 const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 
 const App = () => {
-  // 1. 보안 장치: 인가된 도메인(워드프레스)을 통해서만 접속 허용
+  // 0. 데모 모드 자동 판별 (주소창에 ?demo=true가 있으면 체험판 모드 발동)
+  const isDemoMode = new URLSearchParams(window.location.search).get('demo') === 'true';
+
+  // 1. 보안 장치
   const [isAuthorized, setIsAuthorized] = useState(true); 
 
   useEffect(() => {
     const referrer = document.referrer;
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     
-    // 로컬 테스트 환경이 아니고 리퍼러가 일치하지 않으면 차단
+    // 로컬이 아니고, 리퍼러가 내 사이트가 아니면 차단 (데모 모드도 동일 보안 적용)
     if (!isLocal && (!referrer || !referrer.startsWith(ALLOWED_ORIGIN))) {
       setIsAuthorized(false);
     }
   }, []);
 
-  // 2. 데이터 가공: Nested JSON 구조 매핑
+  // 2. 데이터 가공 (데모 모드일 경우 Day 1만 남기고 자름)
   const CURRICULUM = useMemo(() => {
     if (!Array.isArray(rawData)) return [];
+    
     const groups = {};
     rawData.forEach(item => {
       const dayKey = String(item.day || "1");
@@ -51,16 +55,22 @@ const App = () => {
         examples: item.examples || []
       });
     });
-    return Object.values(groups);
-  }, []);
+
+    const allChapters = Object.values(groups);
+
+    // [핵심] 데모 모드라면 첫 번째 챕터만 리턴
+    if (isDemoMode) {
+      return allChapters.slice(0, 1);
+    }
+
+    return allChapters;
+  }, [isDemoMode]);
 
   const [activeChapter, setActiveChapter] = useState(null);
   const [activeWord, setActiveWord] = useState(null); 
   const [currentExIdx, setCurrentExIdx] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
-
-  // 🎵 오디오 제어를 위한 Ref (중첩 방지용)
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -69,7 +79,6 @@ const App = () => {
     }
   }, [CURRICULUM]);
 
-  // 단어가 바뀌면 재생 중이던 소리 즉시 정지
   useEffect(() => { stopCurrentAudio(); }, [activeWord, activeChapter]);
 
   const stopCurrentAudio = () => {
@@ -98,10 +107,15 @@ const App = () => {
     setPlaybackRate(prev => (prev === 1.0 ? 0.8 : prev === 0.8 ? 0.6 : 1.0));
   };
 
-  // 🚪 [수정됨] 묻지도 따지지도 않고 바로 나가는 로직
+  // 🚪 스마트 종료 로직
   const handleExit = () => {
-    // 팝업(window.confirm) 제거! 바로 부모 창에 신호를 보냅니다.
-    window.parent.postMessage('exit_talkori', '*'); 
+    if (isDemoMode) {
+        // [체험판] 즉시 판매 페이지로 이동 (allow-top-navigation 활용)
+        window.parent.location.href = SALES_PAGE_URL;
+    } else {
+        // [정식판] 워드프레스 HTML 리스너에게 신호 보냄
+        window.parent.postMessage('exit_talkori', '*');
+    }
   };
 
   if (!isAuthorized) {
@@ -109,8 +123,8 @@ const App = () => {
       <div className="flex h-screen items-center justify-center bg-white p-10 text-center">
         <div>
           <h1 className="text-4xl font-black text-[#3713ec] mb-4 tracking-tighter">ACCESS DENIED</h1>
-          <p className="text-slate-500 mb-8 font-medium">Talkori는 공식 강의실 내에서만 이용 가능합니다.</p>
-          <button onClick={() => window.parent.postMessage('exit_talkori', '*')} className="px-8 py-3 bg-[#3713ec] text-white rounded-xl font-bold shadow-lg shadow-[#3713ec]/20 hover:scale-105 transition-all">홈페이지로 이동</button>
+          <p className="text-slate-500 mb-8 font-medium">Talkori는 공식 웹사이트 내에서만 이용 가능합니다.</p>
+          <button onClick={() => window.location.href = ALLOWED_ORIGIN} className="px-8 py-3 bg-[#3713ec] text-white rounded-xl font-bold shadow-lg shadow-[#3713ec]/20 hover:scale-105 transition-all">홈페이지로 이동</button>
         </div>
       </div>
     );
@@ -130,7 +144,9 @@ const App = () => {
               </div>
               <div>
                 <h1 className="font-bold text-xl text-slate-800 tracking-tight">Talkori</h1>
-                <p className="text-[10px] text-[#3713ec] font-bold uppercase tracking-widest">Exit to Class</p>
+                <p className="text-[10px] text-[#3713ec] font-bold uppercase tracking-widest">
+                  {isDemoMode ? "Free Trial" : "Exit to Class"}
+                </p>
               </div>
             </div>
           </div>
@@ -146,7 +162,31 @@ const App = () => {
                 </div>
               </div>
             ))}
+            
+            {/* [체험판 전용] 잠긴 챕터 시각화 */}
+            {isDemoMode && (
+              <div className="opacity-50 mt-4 space-y-2 select-none cursor-not-allowed" onClick={handleExit}>
+                 <div className="p-3 flex items-center gap-4 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                     <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400"><Lock size={14}/></div>
+                     <div className="text-xs font-bold text-slate-400">Day 2: Essential Survival...</div>
+                 </div>
+                 <div className="p-3 flex items-center gap-4 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                     <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400"><Lock size={14}/></div>
+                     <div className="text-xs font-bold text-slate-400">Day 3: My Family...</div>
+                 </div>
+                 <div className="text-center text-[10px] text-slate-400 font-bold mt-2">+ 42 More Chapters Locked</div>
+              </div>
+            )}
           </div>
+          
+          {/* [체험판 전용] 하단 구매 유도 버튼 */}
+          {isDemoMode && (
+             <div className="p-4 border-t border-slate-100 bg-gradient-to-b from-white to-slate-50">
+                <button onClick={handleExit} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-black hover:scale-[1.02] transition-all shadow-lg flex items-center justify-center gap-2">
+                    <Sparkles size={16} className="text-yellow-400 fill-current"/> Unlock All Content
+                </button>
+             </div>
+          )}
         </div>
       </div>
 
@@ -162,8 +202,8 @@ const App = () => {
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{activeChapter.title}</h2>
               </div>
-              <button onClick={handleExit} className="hidden md:flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-500 font-bold transition-colors">
-                <LogOut size={18} /> EXIT
+              <button onClick={handleExit} className="hidden md:flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-[#3713ec] font-bold transition-colors">
+                {isDemoMode ? <><Sparkles size={18}/> Full Version</> : <><LogOut size={18}/> EXIT</>}
               </button>
             </header>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-10">
@@ -187,8 +227,8 @@ const App = () => {
                 <button onClick={toggleSpeed} className="flex items-center gap-1 bg-[#3713ec]/10 px-3 py-1.5 rounded-full text-xs font-bold text-[#3713ec]">
                   <Gauge size={14} /> {playbackRate}x
                 </button>
-                <button onClick={handleExit} className="p-2 text-slate-300 hover:text-red-400 transition-colors">
-                  <LogOut size={20} />
+                <button onClick={handleExit} className="p-2 text-slate-300 hover:text-[#3713ec] transition-colors">
+                  {isDemoMode ? <Sparkles size={20}/> : <LogOut size={20}/>}
                 </button>
               </div>
             </header>

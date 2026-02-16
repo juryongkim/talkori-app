@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Play, ChevronLeft, ChevronRight, Volume2, 
   Menu, X, Zap, Gauge, ArrowLeft,
@@ -12,13 +12,13 @@ const BUNNY_CDN_HOST = "https://talkori.b-cdn.net";
 const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 
 const App = () => {
-  // 1. 데이터 가공: CSV 기반 JSON 구조에 맞게 수정
+  // 1. 데이터 가공: CSV 실제 컬럼명(Ex1_Ko 등) 반영
   const CURRICULUM = useMemo(() => {
     if (!Array.isArray(rawData)) return [];
     const groups = {};
     
     rawData.forEach(item => {
-      // 컬럼명을 소문자(day, situation 등)로 변경하여 매칭
+      // CSV 컬럼명 기준: day (소문자), id (소문자)
       const dayKey = String(item.day || "1");
       if (!groups[dayKey]) {
         groups[dayKey] = {
@@ -29,11 +29,11 @@ const App = () => {
       }
       
       const examples = [];
-      // ex1_ko ~ ex10_ko 구조를 배열로 변환
+      // 실제 CSV 컬럼명은 대소문자가 섞여 있음: Ex1_Ko, Ex1_En, Ex1_Type
       for (let i = 1; i <= 10; i++) {
-        const koField = `ex${i}_ko`;
-        const enField = `ex${i}_en`;
-        const typeField = `ex${i}_type`;
+        const koField = `Ex${i}_Ko`;
+        const enField = `Ex${i}_En`;
+        const typeField = `Ex${i}_Type`;
         
         if (item[koField]) {
           examples.push({
@@ -45,7 +45,7 @@ const App = () => {
       }
 
       groups[dayKey].words.push({
-        id: String(item.id), // id 컬럼 매칭
+        id: String(item.id), // "1-1" 형태 유지
         word: item.word,
         meaning: item.meaning,
         usage_note: item.usage_note,
@@ -55,34 +55,38 @@ const App = () => {
     return Object.values(groups);
   }, []);
 
-  // State 초기값 설정 (데이터가 로드된 후 첫 번째 챕터 선택)
   const [activeChapter, setActiveChapter] = useState(null);
   const [activeWord, setActiveWord] = useState(null); 
   const [currentExIdx, setCurrentExIdx] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
 
-  // 데이터 로드 완료 후 초기 챕터 설정
-  React.useEffect(() => {
+  useEffect(() => {
     if (CURRICULUM.length > 0 && !activeChapter) {
       setActiveChapter(CURRICULUM[0]);
     }
   }, [CURRICULUM]);
 
-  // 오디오 URL 생성 (명세서 규칙: w_1-1.mp3)
+  // 오디오 URL 생성기 (명세서 규칙 준수)
   const getAudioUrl = (wordId, exIndex = null) => {
+    // ID에서 소수점 방지 (예: 1.1 -> 1-1)
+    const cleanId = String(wordId).replace('.', '-'); 
+    
     if (exIndex === null) {
-      return `${CDN_BASE_URL}/w_${wordId}.mp3`;
+      // 단어: w_1-1.mp3
+      return `${CDN_BASE_URL}/w_${cleanId}.mp3`;
     } else {
+      // 예문: w_1-1_ex_01.mp3
       const formattedEx = String(exIndex + 1).padStart(2, '0');
-      return `${CDN_BASE_URL}/w_${wordId}_ex_${formattedEx}.mp3`;
+      return `${CDN_BASE_URL}/w_${cleanId}_ex_${formattedEx}.mp3`;
     }
   };
 
   const playAudio = (url) => {
+    console.log("Playing:", url); // 디버깅용 로그
     const audio = new Audio(url);
     audio.playbackRate = playbackRate;
-    audio.play().catch(e => console.error("Audio Play Error:", e));
+    audio.play().catch(e => console.error("Audio Play Error:", e, "URL:", url));
   };
 
   const toggleSpeed = () => {
@@ -167,6 +171,7 @@ const App = () => {
 
             <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
               <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Left Area */}
                 <div className="lg:col-span-5 space-y-6">
                   <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                     <span className="inline-block px-3 py-1 bg-[#3713ec]/10 text-[#3713ec] text-[10px] font-bold rounded-full uppercase mb-4">Vocabulary</span>
@@ -175,20 +180,19 @@ const App = () => {
                     <button onClick={() => playAudio(getAudioUrl(activeWord.id))} className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-[#3713ec] hover:text-white transition-all shadow-inner">
                       <Volume2 size={20} />
                     </button>
-                    {activeWord.usage_note && (
-                      <div className="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-[11px] text-yellow-800 leading-relaxed">
-                        <span className="font-bold">Usage Note:</span> {activeWord.usage_note}
-                      </div>
-                    )}
                   </div>
 
                   <div className="bg-[#3713ec] rounded-3xl p-8 md:p-10 text-white shadow-xl shadow-[#3713ec]/20 min-h-[300px] flex flex-col justify-center relative overflow-hidden">
                     <div className="relative z-10">
-                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest block mb-4">Pattern {currentExIdx + 1}: {activeWord.examples[currentExIdx]?.type}</span>
+                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest block mb-4">
+                        Pattern {currentExIdx + 1}: {activeWord.examples[currentExIdx]?.type}
+                      </span>
                       <h3 className="text-3xl md:text-4xl font-bold mb-4 korean-text break-keep leading-snug">
-                        {activeWord.examples[currentExIdx]?.ko}
+                        {activeWord.examples[currentExIdx]?.ko || "No example text found"}
                       </h3>
-                      <p className="text-white/70 text-lg mb-10 font-medium">{activeWord.examples[currentExIdx]?.en}</p>
+                      <p className="text-white/70 text-lg mb-10 font-medium">
+                        {activeWord.examples[currentExIdx]?.en}
+                      </p>
                       <button onClick={() => playAudio(getAudioUrl(activeWord.id, currentExIdx))}
                         className="w-16 h-16 bg-white text-[#3713ec] rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform">
                         <Volume2 size={32} className="fill-current" />
@@ -197,8 +201,9 @@ const App = () => {
                   </div>
                 </div>
 
+                {/* Right Matrix (Fixed Layout) */}
                 <div className="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full lg:max-h-[650px]">
-                  <div className="p-6 border-b border-slate-50 bg-slate-50/30 flex items-center gap-2">
+                  <div className="p-6 border-b border-slate-50 flex items-center gap-2">
                     <LayoutGrid className="text-[#3713ec]" size={18} />
                     <h3 className="font-bold text-slate-800">Variation Matrix</h3>
                   </div>
@@ -224,6 +229,9 @@ const App = () => {
                           </div>
                         </button>
                       ))}
+                      {activeWord.examples.length === 0 && (
+                        <div className="text-center p-10 text-slate-400 font-medium">No examples available for this word.</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -241,7 +249,7 @@ const App = () => {
                 const idx = activeChapter.words.findIndex(w => w.id === activeWord.id);
                 if(idx < activeChapter.words.length - 1) { setActiveWord(activeChapter.words[idx+1]); setCurrentExIdx(0); }
               }} className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-black transition-all">
-                Next <ChevronRight />
+                Next Word <ChevronRight />
               </button>
             </footer>
           </div>

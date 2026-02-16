@@ -12,13 +12,12 @@ const BUNNY_CDN_HOST = "https://talkori.b-cdn.net";
 const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 
 const App = () => {
-  // 1. 데이터 가공: CSV 실제 컬럼명(Ex1_Ko 등) 반영
+  // 1. 데이터 가공: 보내주신 Nested JSON 구조에 최적화
   const CURRICULUM = useMemo(() => {
     if (!Array.isArray(rawData)) return [];
     const groups = {};
     
     rawData.forEach(item => {
-      // CSV 컬럼명 기준: day (소문자), id (소문자)
       const dayKey = String(item.day || "1");
       if (!groups[dayKey]) {
         groups[dayKey] = {
@@ -28,28 +27,13 @@ const App = () => {
         };
       }
       
-      const examples = [];
-      // 실제 CSV 컬럼명은 대소문자가 섞여 있음: Ex1_Ko, Ex1_En, Ex1_Type
-      for (let i = 1; i <= 10; i++) {
-        const koField = `Ex${i}_Ko`;
-        const enField = `Ex${i}_En`;
-        const typeField = `Ex${i}_Type`;
-        
-        if (item[koField]) {
-          examples.push({
-            type: item[typeField] || 'Pattern',
-            ko: item[koField],
-            en: item[enField] || ""
-          });
-        }
-      }
-
+      // 이미 구조화된 examples 배열을 그대로 사용합니다.
       groups[dayKey].words.push({
-        id: String(item.id), // "1-1" 형태 유지
+        id: String(item.id),
         word: item.word,
         meaning: item.meaning,
         usage_note: item.usage_note,
-        examples: examples
+        examples: item.examples || [] // 핵심: 데이터 구조 매칭
       });
     });
     return Object.values(groups);
@@ -67,23 +51,17 @@ const App = () => {
     }
   }, [CURRICULUM]);
 
-  // 오디오 URL 생성기 (명세서 규칙 준수)
+  // 오디오 URL 생성기 (w_1-1.mp3 형식)
   const getAudioUrl = (wordId, exIndex = null) => {
-    // ID에서 소수점 방지 (예: 1.1 -> 1-1)
-    const cleanId = String(wordId).replace('.', '-'); 
-    
     if (exIndex === null) {
-      // 단어: w_1-1.mp3
-      return `${CDN_BASE_URL}/w_${cleanId}.mp3`;
+      return `${CDN_BASE_URL}/w_${wordId}.mp3`;
     } else {
-      // 예문: w_1-1_ex_01.mp3
       const formattedEx = String(exIndex + 1).padStart(2, '0');
-      return `${CDN_BASE_URL}/w_${cleanId}_ex_${formattedEx}.mp3`;
+      return `${CDN_BASE_URL}/w_${wordId}_ex_${formattedEx}.mp3`;
     }
   };
 
   const playAudio = (url) => {
-    console.log("Playing:", url); // 디버깅용 로그
     const audio = new Audio(url);
     audio.playbackRate = playbackRate;
     audio.play().catch(e => console.error("Audio Play Error:", e, "URL:", url));
@@ -123,7 +101,7 @@ const App = () => {
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <h3 className={`font-bold text-sm truncate ${activeChapter.chapterId === chapter.chapterId ? 'text-[#3713ec]' : 'text-slate-600'}`}>{chapter.title}</h3>
-                  <p className="text-[10px] text-slate-400 font-bold">{chapter.words.length} Words</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">{chapter.words.length} Words</p>
                 </div>
               </div>
             ))}
@@ -148,7 +126,7 @@ const App = () => {
               {activeChapter.words.map((word, idx) => (
                 <div key={idx} onClick={() => { setActiveWord(word); setCurrentExIdx(0); }}
                   className="bg-white p-6 rounded-2xl border-b-4 border-slate-100 hover:border-[#3713ec] hover:-translate-y-1 transition-all cursor-pointer shadow-sm group">
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">ID: {word.id}</span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">#{word.id}</span>
                   <h4 className="text-2xl font-bold text-slate-800 my-1 group-hover:text-[#3713ec] transition-colors korean-text">{word.word}</h4>
                   <p className="text-sm font-medium text-slate-500">{word.meaning}</p>
                 </div>
@@ -171,7 +149,7 @@ const App = () => {
 
             <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
               <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left Area */}
+                {/* Left Area: Word & Display */}
                 <div className="lg:col-span-5 space-y-6">
                   <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                     <span className="inline-block px-3 py-1 bg-[#3713ec]/10 text-[#3713ec] text-[10px] font-bold rounded-full uppercase mb-4">Vocabulary</span>
@@ -180,17 +158,22 @@ const App = () => {
                     <button onClick={() => playAudio(getAudioUrl(activeWord.id))} className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-[#3713ec] hover:text-white transition-all shadow-inner">
                       <Volume2 size={20} />
                     </button>
+                    {activeWord.usage_note && (
+                      <div className="mt-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50 text-[11px] text-blue-800 leading-relaxed korean-text">
+                        <span className="font-bold">Note:</span> {activeWord.usage_note}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="bg-[#3713ec] rounded-3xl p-8 md:p-10 text-white shadow-xl shadow-[#3713ec]/20 min-h-[300px] flex flex-col justify-center relative overflow-hidden">
+                  <div className="bg-[#3713ec] rounded-3xl p-8 md:p-10 text-white shadow-xl shadow-[#3713ec]/20 min-h-[300px] flex flex-col justify-center relative overflow-hidden group">
                     <div className="relative z-10">
                       <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest block mb-4">
                         Pattern {currentExIdx + 1}: {activeWord.examples[currentExIdx]?.type}
                       </span>
                       <h3 className="text-3xl md:text-4xl font-bold mb-4 korean-text break-keep leading-snug">
-                        {activeWord.examples[currentExIdx]?.ko || "No example text found"}
+                        {activeWord.examples[currentExIdx]?.ko || "Example text missing"}
                       </h3>
-                      <p className="text-white/70 text-lg mb-10 font-medium">
+                      <p className="text-white/70 text-lg mb-10 font-medium italic">
                         {activeWord.examples[currentExIdx]?.en}
                       </p>
                       <button onClick={() => playAudio(getAudioUrl(activeWord.id, currentExIdx))}
@@ -198,14 +181,15 @@ const App = () => {
                         <Volume2 size={32} className="fill-current" />
                       </button>
                     </div>
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl"></div>
                   </div>
                 </div>
 
-                {/* Right Matrix (Fixed Layout) */}
+                {/* Right Area: Matrix Grid */}
                 <div className="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full lg:max-h-[650px]">
-                  <div className="p-6 border-b border-slate-50 flex items-center gap-2">
+                  <div className="p-6 border-b border-slate-50 bg-slate-50/30 flex items-center gap-2">
                     <LayoutGrid className="text-[#3713ec]" size={18} />
-                    <h3 className="font-bold text-slate-800">Variation Matrix</h3>
+                    <h3 className="font-bold text-slate-800 uppercase tracking-tight text-sm">Variation Matrix</h3>
                   </div>
                   <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <div className="grid grid-cols-1 gap-3">
@@ -229,9 +213,6 @@ const App = () => {
                           </div>
                         </button>
                       ))}
-                      {activeWord.examples.length === 0 && (
-                        <div className="text-center p-10 text-slate-400 font-medium">No examples available for this word.</div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -242,7 +223,7 @@ const App = () => {
               <button onClick={() => {
                 const idx = activeChapter.words.findIndex(w => w.id === activeWord.id);
                 if(idx > 0) { setActiveWord(activeChapter.words[idx-1]); setCurrentExIdx(0); }
-              }} className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all">
+              }} className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all disabled:opacity-30">
                 <ChevronLeft /> Prev
               </button>
               <button onClick={() => {

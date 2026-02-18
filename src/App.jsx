@@ -12,7 +12,7 @@ import rawData from './data.json';
 // [설정] 주소 및 보안 설정
 // ==========================================
 const ALLOWED_ORIGIN = "https://talkori.com";
-const SALES_PAGE_URL = "https://talkori.com/pricing";
+const SALES_PAGE_URL = "https://talkori.com/";
 const BUNNY_CDN_HOST = "https://talkori.b-cdn.net";
 const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 
@@ -218,7 +218,7 @@ const App = () => {
                   </div>
                   <h3 className="font-bold text-base text-slate-900 mb-1">1. The Context</h3>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Imagine the situation first.
+                    Don't learn in a void. Every word starts in a real situation—like a convenience store or a blind date.
                   </p>
                 </div>
                 
@@ -229,7 +229,7 @@ const App = () => {
                   </div>
                   <h3 className="font-bold text-base text-slate-900 mb-1">2. The Matrix</h3>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Practice 10 sentence patterns.
+                    Expand one word into 10 expressions. Practice questions, past tense, and even casual "Banmal".
                   </p>
                 </div>
 
@@ -240,7 +240,7 @@ const App = () => {
                   </div>
                   <h3 className="font-bold text-base text-slate-900 mb-1">3. The Waveform</h3>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Shadow the native rhythm.
+                    Listen to the native audio pattern and shadow it until your voice matches the rhythm perfectly.
                   </p>
                 </div>
              </div>

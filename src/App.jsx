@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { 
-  Play, ChevronLeft, ChevronRight, Volume2, 
+import {
+  Play, ChevronLeft, ChevronRight, Volume2,
   Menu, X, Zap, Gauge, ArrowLeft, LogOut,
   GraduationCap, LayoutGrid, Lock, Sparkles,
-  BookOpen, HelpCircle, Activity, Map, MessageCircle
+  BookOpen, HelpCircle, Activity, Map, MessageCircle, Lightbulb, Waves, Target
 } from 'lucide-react';
 
 import rawData from './data.json';
@@ -11,18 +11,19 @@ import rawData from './data.json';
 // ==========================================
 // [설정] 주소 및 보안 설정
 // ==========================================
-const ALLOWED_ORIGIN = "https://talkori.com";     
-const SALES_PAGE_URL = "https://talkori.com/pricing";  
-const BUNNY_CDN_HOST = "https://talkori.b-cdn.net"; 
+const ALLOWED_ORIGIN = "https://talkori.com";
+const SALES_PAGE_URL = "https://talkori.com/pricing";
+const BUNNY_CDN_HOST = "https://talkori.b-cdn.net";
 const CDN_BASE_URL = `${BUNNY_CDN_HOST}/audio_tk`;
 
 const App = () => {
-  // 0. 데모 모드 및 가이드 상태 관리
+  // 0. 상태 관리
   const isDemoMode = new URLSearchParams(window.location.search).get('demo') === 'true';
-  const [showGuide, setShowGuide] = useState(true); // 앱 켜자마자 가이드 보이기 (true)
+  // 앱 처음 실행 시 true로 설정하여 가이드가 메인 화면에 보이게 함
+  const [showGuideMain, setShowGuideMain] = useState(true);
 
   // 1. 보안 장치
-  const [isAuthorized, setIsAuthorized] = useState(true); 
+  const [isAuthorized, setIsAuthorized] = useState(true);
 
   useEffect(() => {
     const referrer = document.referrer;
@@ -59,7 +60,7 @@ const App = () => {
   }, [isDemoMode]);
 
   const [activeChapter, setActiveChapter] = useState(null);
-  const [activeWord, setActiveWord] = useState(null); 
+  const [activeWord, setActiveWord] = useState(null);
   const [currentExIdx, setCurrentExIdx] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -71,7 +72,7 @@ const App = () => {
     }
   }, [CURRICULUM]);
 
-  useEffect(() => { stopCurrentAudio(); }, [activeWord, activeChapter, showGuide]);
+  useEffect(() => { stopCurrentAudio(); }, [activeWord, activeChapter, showGuideMain]);
 
   const stopCurrentAudio = () => {
     if (audioRef.current) {
@@ -90,7 +91,6 @@ const App = () => {
 
   const getAudioUrl = (wordId, exIndex = null) => {
     const cleanId = String(wordId).trim();
-    // [중요] 모든 파일은 .mp3 (소문자) 기준입니다.
     if (exIndex === null) return `${CDN_BASE_URL}/w_${cleanId}.mp3`;
     const formattedNum = String(exIndex + 1).padStart(2, '0');
     return `${CDN_BASE_URL}/w_${cleanId}_ex_${formattedNum}.mp3`;
@@ -108,85 +108,134 @@ const App = () => {
     }
   };
 
-  // --- 가이드 컴포넌트 (Carousel) ---
-  const GuideOverlay = () => {
-    const [slide, setSlide] = useState(0);
-    const slides = [
-      {
-        title: "You know the words... so why can't you speak?",
-        desc: "We’ve all been there. Memorizing lists like 'Delicious = 맛있다' until your eyes hurt, but freezing in real life. That’s because words only come to life inside sentences.",
-        icon: <HelpCircle size={80} className="text-[#3713ec] mb-4" />,
-        sub: "Stop collecting 'frozen' words."
-      },
-      {
-        title: "1 Word x 10 Faces",
-        desc: "Instead of just a definition, we give you 10 different 'expressions' for every single word. Past, future, questions, and even 'Banmal'.",
-        icon: <div className="relative mb-4">
-                <MessageCircle size={80} className="text-[#3713ec]" />
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-xl">x10</span>
-              </div>,
-        sub: "Master questions, past tense, and casual talk all at once."
-      },
-      {
-        title: "Waveform Shadowing",
-        desc: "Don't just look—listen and overlap. Match your voice to the native speaker’s rhythm. When your waves align, you’re officially speaking like a local.",
-        icon: <Activity size={80} className="text-[#3713ec] mb-4" />,
-        sub: "Visualize your voice and match the native waveform."
-      },
-      {
-        title: "Your 45-Day Roadmap",
-        desc: "Every word comes with 10 magic sentences. From convenience stores to blind dates, learn words where they actually happen.",
-        icon: <Map size={80} className="text-[#3713ec] mb-4" />,
-        sub: "Ready to step into your first situation?",
-        isLast: true
-      }
-    ];
-
+  // --- [NEW] 메인 화면용 가이드 컴포넌트 ---
+  const GuideBook = () => {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
-        <div className="max-w-md w-full text-center flex flex-col items-center">
-          <div className="mb-6 transform transition-all duration-500 hover:scale-110">
-            {slides[slide].icon}
-          </div>
-          <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 leading-tight">
-            {slides[slide].title}
-          </h2>
-          <p className="text-slate-500 font-medium leading-relaxed mb-8">
-            {slides[slide].desc}
-          </p>
-          <div className="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 text-xs font-bold text-[#3713ec] mb-10">
-            {slides[slide].sub}
-          </div>
+      <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar bg-white">
+        <header className="mb-8 flex items-center justify-between md:hidden">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-slate-50 rounded-lg shadow-sm mr-4"><Menu size={20}/></button>
+          <h2 className="text-xl font-bold text-slate-900">Guide Book</h2>
+          <div className="w-10"></div> {/* 공간 맞춤용 */}
+        </header>
 
-          <div className="flex gap-2 mb-8">
-            {slides.map((_, i) => (
-              <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === slide ? 'w-8 bg-[#3713ec]' : 'w-2 bg-slate-200'}`}></div>
-            ))}
-          </div>
+        <div className="max-w-4xl mx-auto space-y-12 pb-16">
+          
+          {/* Section 1: Emotional Opening */}
+          <section className="animate-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center gap-3 mb-4">
+              <HelpCircle size={32} className="text-[#3713ec]" />
+              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                You know the words... so why can't you speak?
+              </h1>
+            </div>
+            <p className="text-lg text-slate-600 leading-relaxed mb-6">
+              We’ve all been there. You’ve memorized lists like "Delicious = 맛있다" until your eyes hurt, but when you’re actually at a restaurant in Seoul, you freeze. That’s because we’ve been learning the wrong way. In the real world, nobody just stands there and says "Delicious."
+            </p>
+            <div className="bg-slate-50 p-6 rounded-2xl border-l-4 border-[#3713ec] mb-6">
+              <h3 className="font-bold text-lg mb-3 text-slate-800">You need to be able to say:</h3>
+              <ul className="space-y-2 text-slate-600 font-medium">
+                <li className="flex items-center gap-2"><span className="text-[#3713ec]">"Is this delicious?"</span> (Question)</li>
+                <li className="flex items-center gap-2"><span className="text-[#3713ec]">"Enjoy your delicious meal!"</span> (Suggestion)</li>
+                <li className="flex items-center gap-2"><span className="text-[#3713ec]">"Yesterday’s lunch wasn't that delicious."</span> (Past/Negation)</li>
+              </ul>
+            </div>
+            <p className="text-lg text-slate-600 leading-relaxed">
+              Words only come to life inside sentences. <span className="font-bold text-[#3713ec]">Talkori Matrix</span> is built differently. We’ve placed 900 essential words into 45 real-life situations. Instead of just a definition, we give you <span className="font-bold">10 different "expressions" (Matrix sentences)</span> for every single word.
+            </p>
+          </section>
 
-          <div className="w-full flex gap-4">
-            {slide > 0 && (
-              <button onClick={() => setSlide(slide - 1)} className="flex-1 py-4 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-colors">
-                Back
-              </button>
-            )}
+          {/* Key Features Grid */}
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700 delay-150">
+            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 hover:shadow-md transition-shadow">
+              <Map size={32} className="text-[#3713ec] mb-4" />
+              <h3 className="font-bold text-xl mb-2">Living Context</h3>
+              <p className="text-slate-600 text-sm">From convenience stores to your first "Sogaeting" (blind date)—learn words where they actually happen.</p>
+            </div>
+            <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-100/50 hover:shadow-md transition-shadow">
+              <MessageCircle size={32} className="text-purple-600 mb-4" />
+              <h3 className="font-bold text-xl mb-2">10-Way Transformation</h3>
+              <p className="text-slate-600 text-sm">Past, future, questions, and even "Banmal". We cover every angle so the patterns stick.</p>
+            </div>
+            <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100/50 hover:shadow-md transition-shadow">
+              <Waves size={32} className="text-indigo-600 mb-4" />
+              <h3 className="font-bold text-xl mb-2">Waveform Shadowing</h3>
+              <p className="text-slate-600 text-sm">Don't just look—listen and overlap. Match your voice to the native speaker’s Waveform.</p>
+            </div>
+          </section>
+
+          <hr className="border-slate-200 my-12" />
+
+          {/* Section 2: Practical Learning Guide */}
+          <section className="animate-in slide-in-from-bottom-4 duration-700 delay-300">
+            <div className="flex items-center gap-3 mb-6">
+              <Target size={32} className="text-[#3713ec]" />
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+                Your 100% Success Guide: Speak 10 Times with 1 Word
+              </h2>
+            </div>
+            <p className="text-lg text-slate-600 leading-relaxed mb-8">
+              Every word in this app comes with 10 magic sentences. These aren't just random examples—they are a <span className="font-bold">Spiral Learning System</span> designed to master every speaking pattern you’ll ever need. Here is your roadmap:
+            </p>
+
+            <div className="space-y-6">
+              {/* Step 1 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#3713ec] text-white flex items-center justify-center font-bold shrink-0">1</div>
+                  <div className="w-0.5 h-full bg-slate-200 my-2"></div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl mb-2">Dive into the Context</h3>
+                  <p className="text-slate-600 mb-3">If today’s theme is 'Day 5: Restaurants,' imagine you are sitting in a cozy spot in Myeongdong. Check the word and try the first 3 sentences to get the conversation started.</p>
+                  <div className="bg-slate-100 p-3 rounded-lg text-sm text-slate-700 font-medium korean-text">
+                    (Ex: "이 비빔밥 맛있어요!" or "맛있는 것 추천해주세요.")
+                  </div>
+                </div>
+              </div>
+              {/* Step 2 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#3713ec] text-white flex items-center justify-center font-bold shrink-0">2</div>
+                  <div className="w-0.5 h-full bg-slate-200 my-2"></div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl mb-2">Expand Time & Logic</h3>
+                  <p className="text-slate-600 mb-3">Real conversations move through time. Use Sentences 4 to 6 to talk about your past experiences, future plans, or to politely say "no."</p>
+                  <div className="bg-slate-100 p-3 rounded-lg text-sm text-slate-700 font-medium korean-text">
+                    (Ex: "어제 점심은 맛있었어요," "내일은 맛있는 거 먹을 거예요," or "맛없어요.")
+                  </div>
+                </div>
+              </div>
+              {/* Step 3 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#3713ec] text-white flex items-center justify-center font-bold shrink-0">3</div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl mb-2">Master the Nuance</h3>
+                  <p className="text-slate-600 mb-3">Korean is all about who you're talking to. Use Sentence 9 to learn how to talk to friends (Banmal) and Sentence 10 to learn Idioms that make you sound like a total pro.</p>
+                  <div className="bg-slate-100 p-3 rounded-lg text-sm text-slate-700 font-medium korean-text">
+                    (Ex: "야, 이거 진짜 맛있다!" or "둘이 먹다 하나가 죽어도 모를 맛이에요!")
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Start Button */}
+          <div className="flex justify-center pt-8 animate-in slide-in-from-bottom-4 duration-700 delay-500">
             <button 
-              onClick={() => {
-                if (slides[slide].isLast) {
-                  setShowGuide(false);
-                } else {
-                  setSlide(slide + 1);
-                }
-              }}
-              className="flex-1 py-4 bg-[#3713ec] text-white rounded-xl font-bold shadow-lg shadow-[#3713ec]/30 hover:scale-105 transition-transform"
+              onClick={() => setShowGuideMain(false)} // 클릭 시 가이드 숨김
+              className="px-10 py-4 bg-[#3713ec] text-white text-lg font-bold rounded-xl shadow-xl shadow-[#3713ec]/30 hover:scale-105 hover:bg-[#2a0eb5] transition-all flex items-center gap-3"
             >
-              {slides[slide].isLast ? "Start Learning 🚀" : "Next"}
+              Stop collecting "frozen" words. Start Speaking Now! 🚀
             </button>
           </div>
         </div>
       </div>
     );
   };
+
 
   // --- 메인 렌더링 ---
   if (!isAuthorized) {
@@ -206,13 +255,9 @@ const App = () => {
   return (
     <div className="flex h-screen bg-[#f6f6f8] font-sans text-slate-800 overflow-hidden relative">
       
-      {/* 가이드 오버레이 (showGuide가 true일 때만 보임) */}
-      {showGuide && <GuideOverlay />}
-
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white transform transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200 shadow-xl md:shadow-none`}>
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-slate-50">
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white transform transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200 shadow-xl md:shadow-none flex flex-col h-full`}>
+          <div className="p-6 border-b border-slate-50 shrink-0">
             <div onClick={handleExit} className="flex items-center gap-3 cursor-pointer group">
               <div className="w-10 h-10 bg-[#3713ec] rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform">
                 <GraduationCap className="text-white" size={24} />
@@ -227,17 +272,17 @@ const App = () => {
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            {/* [NEW] 가이드 열기 버튼 추가 */}
+            {/* 가이드 열기 버튼 (언제든 다시 보기) */}
             <div 
-              onClick={() => { setShowGuide(true); setIsSidebarOpen(false); }}
-              className="flex items-center gap-4 p-3 mb-4 rounded-xl bg-blue-50 border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors"
+              onClick={() => { setShowGuideMain(true); setActiveWord(null); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-4 p-3 mb-4 rounded-xl border cursor-pointer transition-colors ${showGuideMain ? 'bg-blue-50 border-blue-100' : 'bg-white border-slate-100 hover:bg-slate-50'}`}
             >
-              <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-600">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${showGuideMain ? 'bg-blue-200 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
                 <BookOpen size={16} />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-blue-800">How to Study?</h3>
-                <p className="text-[10px] text-blue-500 font-bold uppercase">Guide Book</p>
+                <h3 className={`font-bold text-sm ${showGuideMain ? 'text-blue-800' : 'text-slate-700'}`}>How to Study?</h3>
+                <p className={`text-[10px] font-bold uppercase ${showGuideMain ? 'text-blue-500' : 'text-slate-400'}`}>Guide Book</p>
               </div>
             </div>
 
@@ -245,13 +290,13 @@ const App = () => {
 
             {/* 커리큘럼 리스트 */}
             {CURRICULUM.map((chapter, idx) => (
-              <div key={idx} onClick={() => { setActiveChapter(chapter); setActiveWord(null); setIsSidebarOpen(false); }}
-                className={`flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all mb-2 ${activeChapter.chapterId === chapter.chapterId ? 'bg-[#3713ec]/5 border border-[#3713ec]/10' : 'hover:bg-slate-50'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs ${activeChapter.chapterId === chapter.chapterId ? 'bg-[#3713ec] text-white' : 'bg-slate-100 text-slate-400'}`}>
+              <div key={idx} onClick={() => { setActiveChapter(chapter); setActiveWord(null); setShowGuideMain(false); setIsSidebarOpen(false); }}
+                className={`flex items-start gap-4 p-3 rounded-xl cursor-pointer transition-all mb-2 ${!showGuideMain && activeChapter.chapterId === chapter.chapterId ? 'bg-[#3713ec]/5 border border-[#3713ec]/10' : 'hover:bg-slate-50'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs ${!showGuideMain && activeChapter.chapterId === chapter.chapterId ? 'bg-[#3713ec] text-white' : 'bg-slate-100 text-slate-400'}`}>
                   {chapter.chapterId}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <h3 className={`font-bold text-sm truncate ${activeChapter.chapterId === chapter.chapterId ? 'text-[#3713ec]' : 'text-slate-600'}`}>{chapter.title}</h3>
+                  <h3 className={`font-bold text-sm truncate ${!showGuideMain && activeChapter.chapterId === chapter.chapterId ? 'text-[#3713ec]' : 'text-slate-600'}`}>{chapter.title}</h3>
                 </div>
               </div>
             ))}
@@ -268,19 +313,22 @@ const App = () => {
           </div>
           
           {isDemoMode && (
-             <div className="p-4 border-t border-slate-100 bg-gradient-to-b from-white to-slate-50">
+             <div className="p-4 border-t border-slate-100 bg-gradient-to-b from-white to-slate-50 shrink-0">
                 <button onClick={handleExit} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-black hover:scale-[1.02] transition-all shadow-lg flex items-center justify-center gap-2">
                     <Sparkles size={16} className="text-yellow-400 fill-current"/> Unlock All Content
                 </button>
              </div>
           )}
-        </div>
       </div>
 
+      {/* 메인 콘텐츠 영역 */}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {!activeWord ? (
-          /* DASHBOARD VIEW */
-          <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+        {showGuideMain ? (
+          /* [NEW] 가이드북 화면 (앱 실행 시 최초 표시) */
+          <GuideBook />
+        ) : !activeWord ? (
+          /* DASHBOARD VIEW (단어 목록) */
+          <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar animate-in fade-in duration-300">
             <header className="mb-8 flex items-center justify-between">
               <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 bg-white rounded-lg shadow-sm mr-4"><Menu size={20}/></button>
               <div className="flex-1">
@@ -304,8 +352,8 @@ const App = () => {
             </div>
           </div>
         ) : (
-          /* MATRIX VIEW */
-          <div className="flex-1 flex flex-col overflow-hidden bg-[#f6f6f8]">
+          /* MATRIX VIEW (학습 화면) */
+          <div className="flex-1 flex flex-col overflow-hidden bg-[#f6f6f8] animate-in fade-in duration-300">
             <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shrink-0">
               <button onClick={() => setActiveWord(null)} className="flex items-center gap-2 text-slate-500 font-bold text-sm hover:text-[#3713ec] transition-all">
                 <ArrowLeft size={18} /> Back to List

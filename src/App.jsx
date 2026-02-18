@@ -250,17 +250,17 @@ const App = () => {
                 <div className="p-6 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-lg transition-all group">
                   <div className="w-10 h-10 bg-white text-[#3713ec] rounded-lg shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Map size={20} /></div>
                   <h3 className="font-bold text-base text-slate-900 mb-1">1. The Context</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Imagine the situation first.</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">Don't learn in a void. Every word starts in a real situation—like a convenience store or a blind date.</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-lg transition-all group">
                   <div className="w-10 h-10 bg-white text-purple-600 rounded-lg shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><LayoutGrid size={20} /></div>
                   <h3 className="font-bold text-base text-slate-900 mb-1">2. The Matrix</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Practice 10 sentence patterns.</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">Expand one word into 10 expressions. Practice questions, past tense, and even casual "Banmal".</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-lg transition-all group">
                   <div className="w-10 h-10 bg-white text-pink-600 rounded-lg shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Waves size={20} /></div>
                   <h3 className="font-bold text-base text-slate-900 mb-1">3. The Waveform</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Shadow the native rhythm.</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">Listen to the native audio pattern and shadow it until your voice matches the rhythm perfectly.</p>
                 </div>
              </div>
           </section>

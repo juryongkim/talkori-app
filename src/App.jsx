@@ -108,20 +108,20 @@ const App = () => {
     }
   };
 
-// --- [UPDATE] 가독성 개선된 가이드북 컴포넌트 ---
+// --- [UPDATE] 커리큘럼 로드맵이 추가된 최종 가이드북 ---
   const GuideBook = () => {
     return (
       <div className="flex-1 overflow-y-auto bg-white">
-        {/* 모바일 헤더 (사이드바 열기) */}
+        {/* 모바일 헤더 */}
         <header className="flex items-center justify-between p-6 md:hidden sticky top-0 bg-white/90 backdrop-blur-sm z-10 border-b border-slate-100">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-slate-50 rounded-lg shadow-sm mr-4"><Menu size={20}/></button>
           <h2 className="text-lg font-bold text-slate-900">Start Guide</h2>
           <div className="w-10"></div>
         </header>
 
-        <div className="max-w-5xl mx-auto px-6 py-10 md:py-16 space-y-16">
+        <div className="max-w-5xl mx-auto px-6 py-10 md:py-16 space-y-20">
           
-          {/* 1. Hero Section: 강렬한 문제 제기 */}
+          {/* 1. Hero Section */}
           <section className="text-center animate-in slide-in-from-bottom-4 duration-500">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 text-orange-700 text-xs font-bold uppercase tracking-wider mb-6">
               <HelpCircle size={14} /> Why can't I speak?
@@ -136,16 +136,16 @@ const App = () => {
             </p>
           </section>
 
-          {/* 2. Visual Contrast: Old Way vs New Way (설명 대신 시각화) */}
+          {/* 2. Visual Contrast */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 animate-in slide-in-from-bottom-4 duration-700 delay-100">
-            {/* Bad Way */}
-            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col items-center text-center opacity-70 grayscale transition-all hover:grayscale-0 hover:opacity-100">
+            {/* Old Way */}
+            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col items-center text-center opacity-70 grayscale transition-all hover:grayscale-0 hover:opacity-100 group">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">The Old Way</div>
-              <div className="text-3xl font-bold text-slate-400 mb-2 line-through decoration-red-400 decoration-4">Delicious</div>
+              <div className="text-3xl font-bold text-slate-400 mb-2 line-through decoration-red-400 decoration-4 group-hover:text-slate-600 transition-colors">Delicious</div>
               <p className="text-sm text-slate-400">Just a frozen word. <br/>You can't use this in real life.</p>
             </div>
 
-            {/* Good Way */}
+            {/* New Way */}
             <div className="bg-[#3713ec] p-8 rounded-3xl shadow-xl shadow-[#3713ec]/20 flex flex-col items-center text-center relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
               <div className="text-xs font-bold text-white/60 uppercase tracking-widest mb-4">The Matrix Way</div>
@@ -157,52 +157,97 @@ const App = () => {
             </div>
           </section>
 
-          {/* 3. The 3 Steps: 복잡한 설명을 3단계 아이콘으로 압축 */}
+          {/* [NEW] 3. Curriculum Roadmap (추가된 부분) */}
           <section className="animate-in slide-in-from-bottom-4 duration-700 delay-200">
+             <div className="text-center mb-10">
+                <h2 className="text-2xl font-bold text-slate-900 mb-4">Your 45-Day Journey</h2>
+                <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+                  "Talkori guides you from your room (Day 1) to the heart of Korean society (Day 45). <br className="hidden md:block"/>Expand your world one word at a time."
+                </p>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                {/* 연결선 (데스크탑용) */}
+                <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-blue-200 via-indigo-200 to-purple-200 -z-10"></div>
+
+                {/* Phase 1 */}
+                <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm relative hover:-translate-y-1 transition-transform">
+                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm mb-4 border-4 border-white">01</div>
+                   <div className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Day 1 ~ 15</div>
+                   <h3 className="font-bold text-lg text-slate-900 mb-2">Survival & Intuition</h3>
+                   <p className="text-sm text-slate-500 leading-relaxed">
+                     <span className="font-bold text-slate-700">"Me & My Home"</span><br/>
+                     Focus on concrete nouns you can see and touch. Basic survival words like family, body, and food.
+                   </p>
+                </div>
+
+                {/* Phase 2 */}
+                <div className="bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm relative hover:-translate-y-1 transition-transform">
+                   <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm mb-4 border-4 border-white">02</div>
+                   <div className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-1">Day 16 ~ 30</div>
+                   <h3 className="font-bold text-lg text-slate-900 mb-2">Society & Action</h3>
+                   <p className="text-sm text-slate-500 leading-relaxed">
+                     <span className="font-bold text-slate-700">"The City"</span><br/>
+                     Step outside. Use transport, banks, and shops. Start using verbs and expressing emotions.
+                   </p>
+                </div>
+
+                {/* Phase 3 */}
+                <div className="bg-white p-6 rounded-2xl border border-purple-100 shadow-sm relative hover:-translate-y-1 transition-transform">
+                   <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-sm mb-4 border-4 border-white">03</div>
+                   <div className="text-xs font-bold text-purple-500 uppercase tracking-widest mb-1">Day 31 ~ 45</div>
+                   <h3 className="font-bold text-lg text-slate-900 mb-2">Connection & Mastery</h3>
+                   <p className="text-sm text-slate-500 leading-relaxed">
+                     <span className="font-bold text-slate-700">"Deep Talk"</span><br/>
+                     Master logic, abstract ideas, and polite manners (Honorifics). Complete your Korean nuance.
+                   </p>
+                </div>
+             </div>
+          </section>
+
+          {/* 4. The 3 Steps Method */}
+          <section className="animate-in slide-in-from-bottom-4 duration-700 delay-300">
              <h2 className="text-2xl font-bold text-center text-slate-900 mb-10">
-               Your 3-Step Routine
+               How to Study?
              </h2>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Step 1 */}
-                <div className="p-6 rounded-2xl border border-slate-100 hover:border-[#3713ec]/30 hover:shadow-lg transition-all bg-white group">
-                  <div className="w-12 h-12 bg-blue-50 text-[#3713ec] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Map size={24} />
+                <div className="p-6 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-lg transition-all group">
+                  <div className="w-10 h-10 bg-white text-[#3713ec] rounded-lg shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Map size={20} />
                   </div>
-                  <h3 className="font-bold text-lg text-slate-900 mb-2">1. The Context</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    Don't learn in a void. Every word starts in a real situation—like a convenience store or a blind date.
+                  <h3 className="font-bold text-base text-slate-900 mb-1">1. The Context</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Imagine the situation first.
                   </p>
                 </div>
                 
                 {/* Step 2 */}
-                <div className="p-6 rounded-2xl border border-slate-100 hover:border-[#3713ec]/30 hover:shadow-lg transition-all bg-white group">
-                  <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <LayoutGrid size={24} />
+                <div className="p-6 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-lg transition-all group">
+                  <div className="w-10 h-10 bg-white text-purple-600 rounded-lg shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <LayoutGrid size={20} />
                   </div>
-                  <h3 className="font-bold text-lg text-slate-900 mb-2">2. The Matrix</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    Expand one word into 10 expressions. Practice questions, past tense, and even casual "Banmal".
+                  <h3 className="font-bold text-base text-slate-900 mb-1">2. The Matrix</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Practice 10 sentence patterns.
                   </p>
                 </div>
 
                 {/* Step 3 */}
-                <div className="p-6 rounded-2xl border border-slate-100 hover:border-[#3713ec]/30 hover:shadow-lg transition-all bg-white group">
-                  <div className="w-12 h-12 bg-pink-50 text-pink-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Waves size={24} />
+                <div className="p-6 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-lg transition-all group">
+                  <div className="w-10 h-10 bg-white text-pink-600 rounded-lg shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Waves size={20} />
                   </div>
-                  <h3 className="font-bold text-lg text-slate-900 mb-2">3. The Waveform</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    Listen to the native audio pattern and shadow it until your voice matches the rhythm perfectly.
+                  <h3 className="font-bold text-base text-slate-900 mb-1">3. The Waveform</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Shadow the native rhythm.
                   </p>
                 </div>
              </div>
           </section>
 
-          {/* 4. Action: 최종 버튼 */}
-          <div className="text-center pb-10 animate-in slide-in-from-bottom-4 duration-700 delay-300">
-            <p className="text-slate-400 font-medium mb-6 text-sm">
-              Ready to turn the words you "know" into words you can "speak"?
-            </p>
+          {/* 5. Action */}
+          <div className="text-center pb-10 animate-in slide-in-from-bottom-4 duration-700 delay-500">
             <button 
               onClick={() => setShowGuideMain(false)} 
               className="w-full md:w-auto px-12 py-5 bg-[#3713ec] text-white text-lg font-bold rounded-2xl shadow-xl shadow-[#3713ec]/30 hover:scale-105 hover:bg-[#2a0eb5] transition-all flex items-center justify-center gap-3"

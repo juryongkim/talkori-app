@@ -108,129 +108,109 @@ const App = () => {
     }
   };
 
-  // --- [NEW] 메인 화면용 가이드 컴포넌트 ---
+// --- [UPDATE] 가독성 개선된 가이드북 컴포넌트 ---
   const GuideBook = () => {
     return (
-      <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar bg-white">
-        <header className="mb-8 flex items-center justify-between md:hidden">
+      <div className="flex-1 overflow-y-auto bg-white">
+        {/* 모바일 헤더 (사이드바 열기) */}
+        <header className="flex items-center justify-between p-6 md:hidden sticky top-0 bg-white/90 backdrop-blur-sm z-10 border-b border-slate-100">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-slate-50 rounded-lg shadow-sm mr-4"><Menu size={20}/></button>
-          <h2 className="text-xl font-bold text-slate-900">Guide Book</h2>
-          <div className="w-10"></div> {/* 공간 맞춤용 */}
+          <h2 className="text-lg font-bold text-slate-900">Start Guide</h2>
+          <div className="w-10"></div>
         </header>
 
-        <div className="max-w-4xl mx-auto space-y-12 pb-16">
+        <div className="max-w-5xl mx-auto px-6 py-10 md:py-16 space-y-16">
           
-          {/* Section 1: Emotional Opening */}
-          <section className="animate-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center gap-3 mb-4">
-              <HelpCircle size={32} className="text-[#3713ec]" />
-              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                You know the words... so why can't you speak?
-              </h1>
+          {/* 1. Hero Section: 강렬한 문제 제기 */}
+          <section className="text-center animate-in slide-in-from-bottom-4 duration-500">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 text-orange-700 text-xs font-bold uppercase tracking-wider mb-6">
+              <HelpCircle size={14} /> Why can't I speak?
             </div>
-            <p className="text-lg text-slate-600 leading-relaxed mb-6">
-              We’ve all been there. You’ve memorized lists like "Delicious = 맛있다" until your eyes hurt, but when you’re actually at a restaurant in Seoul, you freeze. That’s because we’ve been learning the wrong way. In the real world, nobody just stands there and says "Delicious."
-            </p>
-            <div className="bg-slate-50 p-6 rounded-2xl border-l-4 border-[#3713ec] mb-6">
-              <h3 className="font-bold text-lg mb-3 text-slate-800">You need to be able to say:</h3>
-              <ul className="space-y-2 text-slate-600 font-medium">
-                <li className="flex items-center gap-2"><span className="text-[#3713ec]">"Is this delicious?"</span> (Question)</li>
-                <li className="flex items-center gap-2"><span className="text-[#3713ec]">"Enjoy your delicious meal!"</span> (Suggestion)</li>
-                <li className="flex items-center gap-2"><span className="text-[#3713ec]">"Yesterday’s lunch wasn't that delicious."</span> (Past/Negation)</li>
-              </ul>
-            </div>
-            <p className="text-lg text-slate-600 leading-relaxed">
-              Words only come to life inside sentences. <span className="font-bold text-[#3713ec]">Talkori Matrix</span> is built differently. We’ve placed 900 essential words into 45 real-life situations. Instead of just a definition, we give you <span className="font-bold">10 different "expressions" (Matrix sentences)</span> for every single word.
+            <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
+              You know the words.<br/>
+              <span className="text-[#3713ec]">So why do you freeze?</span>
+            </h1>
+            <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+              Stop memorizing lists like <span className="font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-700">Delicious = 맛있다</span>.
+              <br className="hidden md:block"/> Real conversations don't happen in single words.
             </p>
           </section>
 
-          {/* Key Features Grid */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-700 delay-150">
-            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 hover:shadow-md transition-shadow">
-              <Map size={32} className="text-[#3713ec] mb-4" />
-              <h3 className="font-bold text-xl mb-2">Living Context</h3>
-              <p className="text-slate-600 text-sm">From convenience stores to your first "Sogaeting" (blind date)—learn words where they actually happen.</p>
+          {/* 2. Visual Contrast: Old Way vs New Way (설명 대신 시각화) */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 animate-in slide-in-from-bottom-4 duration-700 delay-100">
+            {/* Bad Way */}
+            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col items-center text-center opacity-70 grayscale transition-all hover:grayscale-0 hover:opacity-100">
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">The Old Way</div>
+              <div className="text-3xl font-bold text-slate-400 mb-2 line-through decoration-red-400 decoration-4">Delicious</div>
+              <p className="text-sm text-slate-400">Just a frozen word. <br/>You can't use this in real life.</p>
             </div>
-            <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-100/50 hover:shadow-md transition-shadow">
-              <MessageCircle size={32} className="text-purple-600 mb-4" />
-              <h3 className="font-bold text-xl mb-2">10-Way Transformation</h3>
-              <p className="text-slate-600 text-sm">Past, future, questions, and even "Banmal". We cover every angle so the patterns stick.</p>
-            </div>
-            <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100/50 hover:shadow-md transition-shadow">
-              <Waves size={32} className="text-indigo-600 mb-4" />
-              <h3 className="font-bold text-xl mb-2">Waveform Shadowing</h3>
-              <p className="text-slate-600 text-sm">Don't just look—listen and overlap. Match your voice to the native speaker’s Waveform.</p>
+
+            {/* Good Way */}
+            <div className="bg-[#3713ec] p-8 rounded-3xl shadow-xl shadow-[#3713ec]/20 flex flex-col items-center text-center relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+              <div className="text-xs font-bold text-white/60 uppercase tracking-widest mb-4">The Matrix Way</div>
+              <div className="space-y-2 mb-4 relative z-10">
+                <div className="bg-white/10 px-4 py-2 rounded-lg text-white font-bold text-lg">"Is this delicious?" <span className="text-xs font-normal opacity-70 ml-2">(Question)</span></div>
+                <div className="bg-white/10 px-4 py-2 rounded-lg text-white font-bold text-lg">"It wasn't delicious." <span className="text-xs font-normal opacity-70 ml-2">(Past)</span></div>
+              </div>
+              <p className="text-sm text-white/80">We give you <span className="font-bold text-white border-b border-white/40">10 real sentences</span> for every word.</p>
             </div>
           </section>
 
-          <hr className="border-slate-200 my-12" />
+          {/* 3. The 3 Steps: 복잡한 설명을 3단계 아이콘으로 압축 */}
+          <section className="animate-in slide-in-from-bottom-4 duration-700 delay-200">
+             <h2 className="text-2xl font-bold text-center text-slate-900 mb-10">
+               Your 3-Step Routine
+             </h2>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Step 1 */}
+                <div className="p-6 rounded-2xl border border-slate-100 hover:border-[#3713ec]/30 hover:shadow-lg transition-all bg-white group">
+                  <div className="w-12 h-12 bg-blue-50 text-[#3713ec] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Map size={24} />
+                  </div>
+                  <h3 className="font-bold text-lg text-slate-900 mb-2">1. The Context</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Don't learn in a void. Every word starts in a real situation—like a convenience store or a blind date.
+                  </p>
+                </div>
+                
+                {/* Step 2 */}
+                <div className="p-6 rounded-2xl border border-slate-100 hover:border-[#3713ec]/30 hover:shadow-lg transition-all bg-white group">
+                  <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <LayoutGrid size={24} />
+                  </div>
+                  <h3 className="font-bold text-lg text-slate-900 mb-2">2. The Matrix</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Expand one word into 10 expressions. Practice questions, past tense, and even casual "Banmal".
+                  </p>
+                </div>
 
-          {/* Section 2: Practical Learning Guide */}
-          <section className="animate-in slide-in-from-bottom-4 duration-700 delay-300">
-            <div className="flex items-center gap-3 mb-6">
-              <Target size={32} className="text-[#3713ec]" />
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-                Your 100% Success Guide: Speak 10 Times with 1 Word
-              </h2>
-            </div>
-            <p className="text-lg text-slate-600 leading-relaxed mb-8">
-              Every word in this app comes with 10 magic sentences. These aren't just random examples—they are a <span className="font-bold">Spiral Learning System</span> designed to master every speaking pattern you’ll ever need. Here is your roadmap:
+                {/* Step 3 */}
+                <div className="p-6 rounded-2xl border border-slate-100 hover:border-[#3713ec]/30 hover:shadow-lg transition-all bg-white group">
+                  <div className="w-12 h-12 bg-pink-50 text-pink-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Waves size={24} />
+                  </div>
+                  <h3 className="font-bold text-lg text-slate-900 mb-2">3. The Waveform</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Listen to the native audio pattern and shadow it until your voice matches the rhythm perfectly.
+                  </p>
+                </div>
+             </div>
+          </section>
+
+          {/* 4. Action: 최종 버튼 */}
+          <div className="text-center pb-10 animate-in slide-in-from-bottom-4 duration-700 delay-300">
+            <p className="text-slate-400 font-medium mb-6 text-sm">
+              Ready to turn the words you "know" into words you can "speak"?
             </p>
-
-            <div className="space-y-6">
-              {/* Step 1 */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#3713ec] text-white flex items-center justify-center font-bold shrink-0">1</div>
-                  <div className="w-0.5 h-full bg-slate-200 my-2"></div>
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl mb-2">Dive into the Context</h3>
-                  <p className="text-slate-600 mb-3">If today’s theme is 'Day 5: Restaurants,' imagine you are sitting in a cozy spot in Myeongdong. Check the word and try the first 3 sentences to get the conversation started.</p>
-                  <div className="bg-slate-100 p-3 rounded-lg text-sm text-slate-700 font-medium korean-text">
-                    (Ex: "이 비빔밥 맛있어요!" or "맛있는 것 추천해주세요.")
-                  </div>
-                </div>
-              </div>
-              {/* Step 2 */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#3713ec] text-white flex items-center justify-center font-bold shrink-0">2</div>
-                  <div className="w-0.5 h-full bg-slate-200 my-2"></div>
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl mb-2">Expand Time & Logic</h3>
-                  <p className="text-slate-600 mb-3">Real conversations move through time. Use Sentences 4 to 6 to talk about your past experiences, future plans, or to politely say "no."</p>
-                  <div className="bg-slate-100 p-3 rounded-lg text-sm text-slate-700 font-medium korean-text">
-                    (Ex: "어제 점심은 맛있었어요," "내일은 맛있는 거 먹을 거예요," or "맛없어요.")
-                  </div>
-                </div>
-              </div>
-              {/* Step 3 */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#3713ec] text-white flex items-center justify-center font-bold shrink-0">3</div>
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl mb-2">Master the Nuance</h3>
-                  <p className="text-slate-600 mb-3">Korean is all about who you're talking to. Use Sentence 9 to learn how to talk to friends (Banmal) and Sentence 10 to learn Idioms that make you sound like a total pro.</p>
-                  <div className="bg-slate-100 p-3 rounded-lg text-sm text-slate-700 font-medium korean-text">
-                    (Ex: "야, 이거 진짜 맛있다!" or "둘이 먹다 하나가 죽어도 모를 맛이에요!")
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Start Button */}
-          <div className="flex justify-center pt-8 animate-in slide-in-from-bottom-4 duration-700 delay-500">
             <button 
-              onClick={() => setShowGuideMain(false)} // 클릭 시 가이드 숨김
-              className="px-10 py-4 bg-[#3713ec] text-white text-lg font-bold rounded-xl shadow-xl shadow-[#3713ec]/30 hover:scale-105 hover:bg-[#2a0eb5] transition-all flex items-center gap-3"
+              onClick={() => setShowGuideMain(false)} 
+              className="w-full md:w-auto px-12 py-5 bg-[#3713ec] text-white text-lg font-bold rounded-2xl shadow-xl shadow-[#3713ec]/30 hover:scale-105 hover:bg-[#2a0eb5] transition-all flex items-center justify-center gap-3"
             >
-              Stop collecting "frozen" words. Start Speaking Now! 🚀
+              Start Day 1 Now <ArrowLeft className="rotate-180" size={20}/>
             </button>
           </div>
+
         </div>
       </div>
     );
